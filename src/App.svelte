@@ -10,6 +10,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>WaniKani Kanji Review</title>
+</svelte:head>
+
 <main>
   {#if authKey}
     <h1>WaniKani Kanji Writing Practice</h1>
