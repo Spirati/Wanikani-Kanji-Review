@@ -3,7 +3,6 @@
 
     let kanji = {}
     let kanjiList = []
-    let userData = {}
 
     let error = false
     let errorStatus = "No error information"
@@ -15,76 +14,49 @@
 
     function randomKanji() {
         let index = Math.floor(Math.random() * kanjiList.length)
-        console.log(kanjiList[index].data)
-        let readings = kanjiList[index].data.readings
-        kanji = {
-            character: kanjiList[index].data.slug,
-            readings: {
-                on: readings.filter(r => r.type == "onyomi"),
-                kun: readings.filter(r => r.type == "kunyomi")
-            },
-            meanings: kanjiList[index].data.meanings
-        }
+        kanji = kanjiList[index]
         console.log(kanji)
         reveal = false
     }
     
     function loadData() {
-        fetch(`https://api.wanikani.com/v2/user`, {
-            headers: {
-                Authorization: `Bearer ${authKey}`
-            }
-        }).then(
+        fetch(`https://kanjiapi.dev/v1/kanji/grade-${authKey.replace("GRADE","")}`)
+        .then(
             res => {
                 res.json().then(
                     json => {
-                        userData = json
-                        console.log(userData)
-                        loadKanji()
+                        Promise.all(
+                            json.map(async (k) => {
+                                let details = await fetch(`https://kanjiapi.dev/v1/kanji/${k}`)
+                                let kjson = await details.json()
+                                return {
+                                    character: k,
+                                    readings: {
+                                        on: kjson.on_readings,
+                                        kun: kjson.kun_readings
+                                    },
+                                    meanings: kjson.meanings
+                                }
+                            })
+                        ).then((l) => {
+                            kanjiList = l
+                            randomKanji()
+                        }).catch(() => {
+                            error = true
+                            errorStatus = "Could not parse kanji API response. Please try again later."
+                        })
                     }
                 )
             }
         ).catch(
             err => {
-
-            }
-        )
-    }
-
-    function loadKanji() {
-        let levels = new Array(userData.data.level).fill(0).map((_, i) => i+1)
-        fetch(`https://api.wanikani.com/v2/subjects?types=kanji&levels=${levels.join(",")}`, {
-            headers: {
-                Authorization: `Bearer ${authKey}`
-            }
-        }).then(
-            (result) => {
-                if (result.status == 401 || result.status == 404) {
-                    error = true
-                    errorStatus = "Could not load kanji. Please log out and log back in."
-                    return
-                }
-                result.json().then(
-                    json => {
-                        kanjiList = json.data
-                        randomKanji()
-                    }
-                ).catch(
-                    err => {
-                        error = true
-                        console.log(err)
-                        errorStatus = "Could not parse WaniKani kanji output. Please log out and log back in."
-                    }
-                )
-            }
-        ).catch(
-            (err) => {
                 error = true
-                errorStatus = "Could not contact the WaniKani servers. Please try again later."
+                errorStatus = "Could not contact kanji API. Please try again later."
             }
         )
     }
 
+    
     loadData()
 </script>
 
@@ -95,34 +67,20 @@
         <div class="window">
             <h2>
                 {#each kanji.meanings as meaning}
-                    {#if meaning.primary}
-                        <u>{meaning.meaning}</u>
-                    {:else}
-                        {meaning.meaning}
-                    {/if}
-                    &MediumSpace;
+                    {meaning};&MediumSpace;
                 {/each}
             </h2>
             {#if kanji.readings.on.length > 0}
             <p>音読み: 
                 {#each kanji.readings.on as reading}
-                    {#if reading.primary}
-                        <u>{reading.reading}</u>
-                    {:else}
-                        {reading.reading}
-                    {/if}
-                    &MediumSpace;
+                    {reading};&MediumSpace;
                 {/each}
             </p>
             {/if}
             {#if kanji.readings.kun.length > 0}
             <p>訓読み:
                 {#each kanji.readings.kun as reading}
-                    {#if reading.primary}
-                        <u>{reading.reading}</u>
-                    {:else}
-                        {reading.reading}
-                    {/if}
+                    {reading}
                     &MediumSpace;
                 {/each}
             </p>
