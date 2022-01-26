@@ -2,14 +2,17 @@
   import Login from './Login.svelte'
   import ReviewWindow from './ReviewWindow.svelte'
   import ReviewWindowKyouiku from './ReviewWindowKyouiku.svelte'
+  import Infobox from './Infobox.svelte'
 
   let authKey = window.localStorage.getItem('authKey')
   let gradeLevel
-
+  let showBox = false
+  
   function clearAuth() {
     window.localStorage.removeItem('authKey')
     authKey = undefined
   }
+
 </script>
 
 <svelte:head>
@@ -26,6 +29,9 @@
     <ReviewWindow {authKey}/>
     <button on:click={clearAuth}>Log out</button>
   {:else}
+    {#if showBox}
+      <Infobox closeFunction={() => showBox = false}/>
+    {/if}
     <h1>WaniKani Kanji Writing Practice</h1>
     <Login bind:authKey/>
     <h2>Or, review from Kyouiku kanji without logging in:</h2>
@@ -42,6 +48,8 @@
       authKey = `GRADE${gradeLevel}`
       window.localStorage.setItem("authKey", authKey)
     }}>Go</button>
+    <br/>
+    <button on:click={() => showBox = true}>How does this work?</button>
   {/if}
   <br/>
 </main>
