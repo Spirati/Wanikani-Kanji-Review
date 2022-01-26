@@ -12,6 +12,10 @@
   }
 </script>
 
+<svelte:head>
+  <title>WaniKani Kanji Review</title>
+</svelte:head>
+
 <main>
   {#if (authKey || "").substring(0, 5) == "GRADE"}
     <h1>Practicing from Kyouiku grade {authKey.replace("GRADE","")}</h1>
